@@ -97,24 +97,28 @@ def smpl2bvh(model_path:str, poses:str, output:str, mirror:bool,
     offsets *= 100
     
     scaling = None
-    
-    # Pose setting.
-    if poses.endswith(".npz"):
-        poses = np.load(poses)
-        rots = np.squeeze(poses["poses"], axis=0) # (N, 24, 3)
-        trans = np.squeeze(poses["trans"], axis=0) # (N, 3)
 
-    elif poses.endswith(".pkl"):
-        with open(poses, "rb") as f:
-            poses = pickle.load(f)
-            rots = poses["smpl_poses"] # (N, 72)
-            rots = rots.reshape(rots.shape[0], -1, 3) # (N, 24, 3)
-            scaling = poses["smpl_scaling"]  # (1,)
-            trans = poses["smpl_trans"]  # (N, 3)
-    
-    else:
-        raise Exception("This file type is not supported!")
-    
+    poses = torch.load(poses)
+    rots = poses['pose'][0].view(-1, 24, 3).numpy()
+    trans = poses['tran'][0].numpy()
+
+    # # Pose setting.
+    # if poses.endswith(".npz"):
+    #     poses = np.load(poses)
+    #     rots = np.squeeze(poses["poses"], axis=0) # (N, 24, 3)
+    #     trans = np.squeeze(poses["trans"], axis=0) # (N, 3)
+    #
+    # elif poses.endswith(".pkl"):
+    #     with open(poses, "rb") as f:
+    #         poses = pickle.load(f, encoding='latin1')
+    #         rots = poses["smpl_poses"] # (N, 72)
+    #         rots = rots.reshape(rots.shape[0], -1, 3) # (N, 24, 3)
+    #         scaling = poses["smpl_scaling"]  # (1,)
+    #         trans = poses["smpl_trans"]  # (N, 3)
+    #
+    # else:
+    #     raise Exception("This file type is not supported!")
+    #
     if scaling is not None:
         trans /= scaling
     
@@ -165,7 +169,16 @@ def smpl2bvh(model_path:str, poses:str, output:str, mirror:bool,
 
 if __name__ == "__main__":
     args = parse_args()
-    
+
+    args.model_path = "data/model_smpl/"
+    args.model_type = "smpl"
+    args.mirror = False
+    args.gender = "MALE"
+    args.poses = "data/test.pt"
+    args.num_betas = 10
+    args.fps = 60
+    args.output = "data/output/smpl/test_pt.bvh"
+
     smpl2bvh(model_path=args.model_path, model_type=args.model_type, 
              mirror = args.mirror, gender=args.gender,
              poses=args.poses, num_betas=args.num_betas, 
